@@ -2,7 +2,7 @@
 #include "ultrasonic.h"
 
 #define TURNING_TIME_MS 300 // The time duration (ms) for turning
-#define adjustment 40.0     // course correction multiplier
+#define adjustment 34.0     // course correction multiplier
 #define pollRate 60         // course course correction poll rate in ms
 MeDCMotor leftMotor(M1);    // assigning leftMotor to port M1
 MeDCMotor rightMotor(M2);   // assigning RightMotor to port M2
@@ -28,12 +28,12 @@ bool polling(unsigned long interval)
 
 void pid()
 {
-  const float target = 8.0f;
+  const float target = 9.0f;
 
   float distance = readUltrasonic();
   Serial.println("Distance: " + String(distance) + " cm");
   // No echo or a distant return: continue forward through the opening.
-  if (distance == 0)
+  if (distance == 0 || distance > 15.0f)
   {
     leftMotor.run(-motorSpeed);
     rightMotor.run(motorSpeed);
@@ -82,11 +82,11 @@ void turnRight()
 }
 void uTurn()
 {
-  leftMotor.run(motorSpeed);     // Positive: wheel turns clockwise
-  rightMotor.run(motorSpeed);    // Negative: wheel turns anti-clockwise
-  delay(1.95 * TURNING_TIME_MS); // Keep turning for this time duration
-  leftMotor.stop();              // Stop left motor
-  rightMotor.stop();             // Stop right motor
+  leftMotor.run(motorSpeed);    // Positive: wheel turns clockwise
+  rightMotor.run(motorSpeed);   // Negative: wheel turns anti-clockwise
+  delay(1.85 * TURNING_TIME_MS); // Keep turning for this time duration
+  leftMotor.stop();             // Stop left motor
+  rightMotor.stop();            // Stop right motor
 }
 
 void doubleLeftTurn()
@@ -142,12 +142,6 @@ void loop()
     rightMotor.stop();
 
     delay(1000);
-
-    turnLeft();
-    delay(1000);
-    turnRight();
-    delay(1000);
-
     uTurn();
     celebrate();
     delay(500);

@@ -33,7 +33,7 @@ float readUltrasonic()
 
     unsigned long duration =
         pulseIn(US_PIN, HIGH, US_TIMEOUT_US);
-
+    Serial.println("Ultrasonic duration: " + String(duration) + " us");
     if (duration == 0)
     {
         lastResult = 0;
