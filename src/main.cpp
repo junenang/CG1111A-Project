@@ -2,7 +2,7 @@
 #include "ultrasonic.h"
 
 #define TURNING_TIME_MS 300 // The time duration (ms) for turning
-#define adjustment 30.0     // course correction in motorspeed
+#define adjustment 40.0     // course correction multiplier
 #define pollRate 60         // course course correction poll rate in ms
 MeDCMotor leftMotor(M1);    // assigning leftMotor to port M1
 MeDCMotor rightMotor(M2);   // assigning RightMotor to port M2
