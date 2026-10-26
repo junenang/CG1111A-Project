@@ -135,19 +135,6 @@ void setup()
 
 void loop()
 {
-  {
-    // goForward(3000);
-    // delay(1000);
-    // turnLeft();
-    // delay(1000);
-    // turnRight();
-    // delay(1000);
-    // uTurn();
-    // delay(1000);
-    // celebrate();
-    // delay(2000);
-  }
-
   if (detectBlackLine())
   { // line follower
 
