@@ -83,11 +83,11 @@ void turnRight()
 }
 void uTurn()
 {
-  leftMotor.run(motorSpeed);     // Positive: wheel turns clockwise
-  rightMotor.run(motorSpeed);    // Negative: wheel turns anti-clockwise
-  delay(1.85 * TURNING_TIME_MS); // Keep turning for this time duration
-  leftMotor.stop();              // Stop left motor
-  rightMotor.stop();             // Stop right motor
+  leftMotor.run(motorSpeed);    // Positive: wheel turns clockwise
+  rightMotor.run(motorSpeed);   // Negative: wheel turns anti-clockwise
+  delay(1.9 * TURNING_TIME_MS); // Keep turning for this time duration
+  leftMotor.stop();             // Stop left motor
+  rightMotor.stop();            // Stop right motor
 }
 
 void doubleLeftTurn()
@@ -144,7 +144,7 @@ void loop()
   int irReading = readIRRaw();
   Serial.print("IR raw: ");
   Serial.println(irReading);
-  if (irReading <= 150)
+  if (irReading <= 100)
   {
     irTurnTriggered = false;
   }
@@ -161,12 +161,12 @@ void loop()
     celebrate();
     delay(500);
   }
-  else if (irReading > 150 && !irTurnTriggered && readUltrasonic() > 15.0f)
+  else if (irReading > 100 && !irTurnTriggered && readUltrasonic() > 15.0f)
   {
     irTurnTriggered = true;
-    leftMotor.run(-(motorSpeed - 175));
+    leftMotor.run(-(motorSpeed - 125));
     rightMotor.run(motorSpeed);
-    delay(175); // Brief curve before handing control to ultrasonic correction.
+    delay(100); // Brief curve before handing control to ultrasonic correction.
     pid();
   }
   else
