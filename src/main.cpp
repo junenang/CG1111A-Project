@@ -1,5 +1,6 @@
 #include "MeMCore.h"
 #include "ultrasonic.h"
+#include "IR Sensor.h"
 
 #define TURNING_TIME_MS 300 // The time duration (ms) for turning
 #define adjustment 34.0     // course correction multiplier
@@ -82,11 +83,11 @@ void turnRight()
 }
 void uTurn()
 {
-  leftMotor.run(motorSpeed);    // Positive: wheel turns clockwise
-  rightMotor.run(motorSpeed);   // Negative: wheel turns anti-clockwise
+  leftMotor.run(motorSpeed);     // Positive: wheel turns clockwise
+  rightMotor.run(motorSpeed);    // Negative: wheel turns anti-clockwise
   delay(1.85 * TURNING_TIME_MS); // Keep turning for this time duration
-  leftMotor.stop();             // Stop left motor
-  rightMotor.stop();            // Stop right motor
+  leftMotor.stop();              // Stop left motor
+  rightMotor.stop();             // Stop right motor
 }
 
 void doubleLeftTurn()
@@ -129,12 +130,26 @@ void celebrate()
 void setup()
 {
   Serial.begin(9600);
+  setupIR();
+
+  Serial.begin(9600);
   delay(3000); // Do nothing for 10000 ms = 10 seconds
-  move();      // The motors keep running until explicitly stopped.
+  // move();      // The motors keep running until explicitly stopped.
 }
 
 void loop()
 {
+
+  static bool irTurnTriggered = false;
+  int irReading = readIRRaw();
+  Serial.print("IR raw: ");
+  Serial.println(irReading);
+  if (irReading <= 150)
+  {
+    irTurnTriggered = false;
+  }
+  // delay(200); // Keep diagnostic output readable: five measurements per second.
+
   if (detectBlackLine())
   { // line follower
 
@@ -145,6 +160,14 @@ void loop()
     uTurn();
     celebrate();
     delay(500);
+  }
+  else if (irReading > 150 && !irTurnTriggered && readUltrasonic() > 15.0f)
+  {
+    irTurnTriggered = true;
+    leftMotor.run(-(motorSpeed - 175));
+    rightMotor.run(motorSpeed);
+    delay(175); // Brief curve before handing control to ultrasonic correction.
+    pid();
   }
   else
   {
