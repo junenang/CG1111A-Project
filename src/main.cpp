@@ -1,15 +1,17 @@
 #include "MeMCore.h"
 #include "ultrasonic.h"
 #include "IR Sensor.h"
+#include "RatioColourSensor.h"
 
-#define TURNING_TIME_MS 300 // The time duration (ms) for turning
-#define adjustment 34.0     // course correction multiplier
+#define TURNING_TIME_MS 305 // The time duration (ms) for turning
+#define adjustment 45.0     // course correction multiplier
 #define pollRate 60         // course course correction poll rate in ms
 MeDCMotor leftMotor(M1);    // assigning leftMotor to port M1
 MeDCMotor rightMotor(M2);   // assigning RightMotor to port M2
-uint8_t motorSpeed = 255;
-const uint8_t LINE_S1 = 9; // Line sensor: Port 2
+uint8_t motorSpeed = 255;   // Leave room for the full +/-80 steering correction.
+const uint8_t LINE_S1 = 9;  // Line sensor: Port 2
 const uint8_t LINE_S2 = 10;
+RatioColourSensor colourSensor; // Create a colour sensor object
 
 // Initialisation
 MeBuzzer buzzer;                     // Create a buzzer object to play tones
@@ -32,8 +34,8 @@ void pid()
   const float target = 9.0f;
 
   float distance = readUltrasonic();
-  Serial.println("Distance: " + String(distance) + " cm");
-  // No echo or a distant return: continue forward through the opening.
+  // Serial.println("Distance: " + String(distance) + " cm");
+  //  No echo or a distant return: continue forward through the opening.
   if (distance == 0 || distance > 15.0f)
   {
     leftMotor.run(-motorSpeed);
@@ -94,7 +96,7 @@ void doubleLeftTurn()
 {
   turnLeft();     // Turn left for 287 ms
   delay(100);     // Wait for 100 ms
-  goForward(750); // Move forward for 750 ms
+  goForward(650); // Move forward for 650 ms
   delay(100);     // Wait for 100 ms
   turnLeft();     // Turn left for 287 ms
 }
@@ -103,7 +105,7 @@ void doubleRightTurn()
 {
   turnRight();    // Turn right for 287 ms
   delay(100);     // Wait for 100 ms
-  goForward(750); // Move forward for 750 ms
+  goForward(650); // Move forward for 750 ms
   delay(100);     // Wait for 100 ms
   turnRight();    // Turn right for 287 ms
 }
@@ -132,6 +134,13 @@ void setup()
   Serial.begin(9600);
   setupIR();
 
+  if (!colourSensor.begin())
+  {
+    leftMotor.stop();
+    rightMotor.stop();
+    Serial.println(F("No valid colour calibration. Run the calibration program before driving."));
+  }
+
   Serial.begin(9600);
   delay(3000); // Do nothing for 10000 ms = 10 seconds
   // move();      // The motors keep running until explicitly stopped.
@@ -139,12 +148,18 @@ void setup()
 
 void loop()
 {
+  if (!colourSensor.isCalibrated())
+  {
+    leftMotor.stop();
+    rightMotor.stop();
+    return;
+  }
 
   static bool irTurnTriggered = false;
   int irReading = readIRRaw();
   Serial.print("IR raw: ");
   Serial.println(irReading);
-  if (irReading <= 100)
+  if (irReading >= 70)
   {
     irTurnTriggered = false;
   }
@@ -156,17 +171,44 @@ void loop()
     leftMotor.stop();
     rightMotor.stop();
 
-    delay(1000);
-    uTurn();
-    celebrate();
-    delay(500);
+    const auto reading = colourSensor.read();
+
+    if (reading.label == RatioColourSensor::RED)
+    {
+      turnLeft();
+    }
+    else if (reading.label == RatioColourSensor::GREEN)
+    {
+      turnRight();
+    }
+    else if (reading.label == RatioColourSensor::ORANGE)
+    {
+      uTurn();
+    }
+    else if (reading.label == RatioColourSensor::PINK)
+    {
+      doubleLeftTurn();
+    }
+    else if (reading.label == RatioColourSensor::BLUE)
+    {
+      doubleRightTurn();
+    }
+    else if (reading.label == RatioColourSensor::WHITE)
+    {
+      celebrate();
+      exit(0); // Stop the program after celebration
+    }
+    // delay(1000);
+    // uTurn();
+    // celebrate();
+    // delay(500);
   }
-  else if (irReading > 100 && !irTurnTriggered && readUltrasonic() > 15.0f)
+  else if (irReading < 150 && !irTurnTriggered && readUltrasonic() > 15.0f)
   {
     irTurnTriggered = true;
-    leftMotor.run(-(motorSpeed - 125));
-    rightMotor.run(motorSpeed);
-    delay(100); // Brief curve before handing control to ultrasonic correction.
+    leftMotor.run(-(motorSpeed));
+    rightMotor.run(motorSpeed - 40);
+    delay(110); // Brief curve before handing control to ultrasonic correction.
     pid();
   }
   else
