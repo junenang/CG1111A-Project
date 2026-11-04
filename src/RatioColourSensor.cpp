@@ -220,7 +220,7 @@ RatioColourSensor::Reading RatioColourSensor::evaluate(const Model &model,
   // White must be sufficiently balanced, with no excessive red share.
   // This extra ratio check helps keep pale pink separate from white.
   if (result.saturation <= model.whiteMaxSaturation &&
-      result.ratios[0] <= 0.35f)
+      result.ratios[0] <= 0.34f)
   {
     if (result.brightness >= model.whiteMinBrightness)
     {
@@ -253,15 +253,20 @@ RatioColourSensor::Reading RatioColourSensor::evaluate(const Model &model,
     }
     else if (r > g + kDominanceMargin && r > b + kDominanceMargin)
     {
-      if (fabsf(b - model.pinkMinB) <= kRuleMargin)
+      const float pinkThreshold = model.pinkMinB + 0.02f;
+
+      if (fabsf(b - pinkThreshold) <= kRuleMargin)
         return result;
-      if (b > model.pinkMinB)
+      if (b > pinkThreshold)
         result.label = PINK;
       else
       {
-        if (fabsf(g - model.orangeMinG) <= kRuleMargin)
+        const float orangeThreshold = model.orangeMinG - 0.02f;
+
+        if (fabsf(g - orangeThreshold) <= kRuleMargin)
           return result;
-        result.label = g > model.orangeMinG ? ORANGE : RED;
+
+        result.label = g > orangeThreshold ? ORANGE : RED;
       }
     }
   }
